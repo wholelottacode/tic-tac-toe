@@ -1,17 +1,47 @@
 function boardFactory() {
   const board = [['','',''], ['','',''], ['','','']]
+  
+  function getRow(tileNumber) {
+    if(tileNumber <= 2) {
+      return 0
+    } else if (tileNumber <= 5) {
+      return 1
+    } else {
+      return 2
+    }
+  }
+
+  function getColumn(tileNumber) {
+    return tileNumber % 3
+  }
+
+  function updateTile(tileNumber, marker) {
+    const row = getRow(tileNumber)
+    const column = getColumn(tileNumber)
+    if(!board[row][column]) {
+      board[row][column] = marker
+      return true
+    }
+    return false // tile was filled
+  }
+
   return {
-    board
+    updateTile
   }
 }
 
 function playerFactory(name, marker) {
-  function makeMove() {
-    return `I'm ${name} and I will make a move`
+  function getName() {
+    return name
+  }
+
+  function getMarker() {
+    return marker
   }
 
   return {
-    makeMove
+    getName,
+    getMarker
   }
 }
 
@@ -22,25 +52,35 @@ const game = (function gameFactory() {
   let turn = playerOne
   let isOver = false
 
-  function play() {
-    while(!isOver) {
-      // let players click on board
+  function makeMove(tileNumber, marker) {
+    console.log(`apply ${marker} at position ${tileNumber}`)
+    const isUpdateSuccessful = board.updateTile(tileNumber, marker)
+    return isUpdateSuccessful
+  }
 
-      // update board
-
-      // if winner
-        // isOver = false
-      // else change turns
+  function updateTurn() {
+    if(turn === playerOne) {
+      turn = playerTwo
+    } else {
+      turn = playerOne
     }
   }
 
   return {
-    play,
+    turn,
+    makeMove,
+    updateTurn
   }
 })()
 
-const handleTileClick = function tileClick(e) {
-  console.log(typeof e.target.id)
+const handleTileClick = function (e) {
+  const tileNumber = parseInt(e.target.id)
+  const { turn, makeMove } = game
+  if(makeMove(tileNumber, turn.getMarker())) {
+    e.target.textContent = turn.getMarker()
+  } else {
+    console.log('invalid move!')
+  }
 } 
 
 const tiles = document.querySelectorAll('.tile')
