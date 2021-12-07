@@ -1,5 +1,8 @@
+const NUMBER_OF_TILES = 9
+
 function boardFactory() {
   const board = [['','',''], ['','',''], ['','','']]
+  let tilesRemaining = NUMBER_OF_TILES
   
   function getRow(tileNumber) {
     if(tileNumber <= 2) {
@@ -15,18 +18,57 @@ function boardFactory() {
     return tileNumber % 3
   }
 
+  function checkRow(tileNumber) {
+    const row = getRow(tileNumber)
+    return board[row][0] === board[row][1] && board[row][0] === board[row][2]
+  }
+
+  function checkColumn(tileNumber) {
+    const column = getColumn(tileNumber)
+    return board[0][column] === board[1][column] && board[0][column] === board[2][column]
+  }
+
+  function checkTopLeftToBottomRight(tileNumber) {
+    const isOnDiagonal = [0,4,8].includes(tileNumber)
+    if(isOnDiagonal) {
+      return board[0][0] === board[1][1] && board[0][0] === board[2][2]
+    }
+    return false
+  }
+
+  function checkTopRightToBottomLeft(tileNumber) {
+    const isOnDiagonal = [2,4,6].includes(tileNumber)
+    if(isOnDiagonal) {
+      return board[0][2] === board[1][1] && board[0][2] === board[2][0]
+    }
+    return false
+  }
+
+  function isWin(tileNumber) {
+    return checkRow(tileNumber) || checkColumn(tileNumber) || checkTopLeftToBottomRight(tileNumber) || checkTopRightToBottomLeft(tileNumber)
+  }
+
   function updateTile(tileNumber, marker) {
+    // console.log(`update tile: ${tileNumber}`)
     const row = getRow(tileNumber)
     const column = getColumn(tileNumber)
     if(!board[row][column]) {
       board[row][column] = marker
+      tilesRemaining -= 1
+      // console.log(board)
       return true
     }
-    return false // tile was filled
+    return false
+  }
+
+  function getTilesRemaining() {
+    return tilesRemaining
   }
 
   return {
-    updateTile
+    updateTile,
+    isWin,
+    getTilesRemaining
   }
 }
 
@@ -39,9 +81,14 @@ function playerFactory(name, marker) {
     return marker
   }
 
+  function toString() {
+    `Player: ${name}, Marker: ${marker}`
+  }
+
   return {
     getName,
-    getMarker
+    getMarker,
+    toString,
   }
 }
 
@@ -53,12 +100,24 @@ const game = (function gameFactory() {
   let isOver = false
 
   function makeMove(tileNumber, marker) {
-    console.log(`apply ${marker} at position ${tileNumber}`)
+    // console.log(`apply ${marker} at position ${tileNumber}`)
     const isUpdateSuccessful = board.updateTile(tileNumber, marker)
+    if(isUpdateSuccessful) {
+      if(board.isWin(tileNumber)) {
+        console.log('winner!')
+        // set isOver to false
+      } else if(!board.getTilesRemaining()) {
+        console.log('tie game')
+      } else{
+        // swap turns
+        updateTurn()
+      }
+    }
     return isUpdateSuccessful
   }
 
   function updateTurn() {
+    console.log('update turn')
     if(turn === playerOne) {
       turn = playerTwo
     } else {
@@ -75,7 +134,9 @@ const game = (function gameFactory() {
 
 const handleTileClick = function (e) {
   const tileNumber = parseInt(e.target.id)
+  console.log(`clicked tile: ${tileNumber}`)
   const { turn, makeMove } = game
+  console.log(turn.toString())
   if(makeMove(tileNumber, turn.getMarker())) {
     e.target.textContent = turn.getMarker()
   } else {
