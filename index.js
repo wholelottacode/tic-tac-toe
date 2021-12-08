@@ -49,13 +49,11 @@ function boardFactory() {
   }
 
   function updateTile(tileNumber, marker) {
-    // console.log(`update tile: ${tileNumber}`)
     const row = getRow(tileNumber)
     const column = getColumn(tileNumber)
     if(!board[row][column]) {
       board[row][column] = marker
       tilesRemaining -= 1
-      // console.log(board)
       return true
     }
     return false
@@ -82,13 +80,14 @@ function playerFactory(name, marker) {
   }
 
   function toString() {
-    `Player: ${name}, Marker: ${marker}`
+    return `${name}, ${marker}`
   }
 
   return {
     getName,
     getMarker,
     toString,
+    marker
   }
 }
 
@@ -100,16 +99,13 @@ const game = (function gameFactory() {
   let isOver = false
 
   function makeMove(tileNumber, marker) {
-    // console.log(`apply ${marker} at position ${tileNumber}`)
     const isUpdateSuccessful = board.updateTile(tileNumber, marker)
     if(isUpdateSuccessful) {
       if(board.isWin(tileNumber)) {
         console.log('winner!')
-        // set isOver to false
       } else if(!board.getTilesRemaining()) {
         console.log('tie game')
-      } else{
-        // swap turns
+      } else {
         updateTurn()
       }
     }
@@ -117,26 +113,27 @@ const game = (function gameFactory() {
   }
 
   function updateTurn() {
-    console.log('update turn')
     if(turn === playerOne) {
+      console.log('p1 -> p2')
       turn = playerTwo
     } else {
+      console.log('p2 -> p1')
       turn = playerOne
     }
+    console.log(`next turn belongs to ${turn.getName()}`)
   }
 
   return {
     turn,
     makeMove,
-    updateTurn
   }
 })()
 
+
 const handleTileClick = function (e) {
   const tileNumber = parseInt(e.target.id)
-  console.log(`clicked tile: ${tileNumber}`)
   const { turn, makeMove } = game
-  console.log(turn.toString())
+  console.log(`${turn.getName()} clicked tile: ${tileNumber}`)
   if(makeMove(tileNumber, turn.getMarker())) {
     e.target.textContent = turn.getMarker()
   } else {
