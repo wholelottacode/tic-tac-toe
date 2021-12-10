@@ -3,7 +3,7 @@ const NUMBER_OF_TILES = 9
 function boardFactory() {
   const board = [['','',''], ['','',''], ['','','']]
   let tilesRemaining = NUMBER_OF_TILES
-  
+
   function getRow(tileNumber) {
     if(tileNumber <= 2) {
       return 0
@@ -71,6 +71,8 @@ function boardFactory() {
 }
 
 function playerFactory(name, marker) {
+  isWinner = false
+
   function getName() {
     return name
   }
@@ -83,16 +85,26 @@ function playerFactory(name, marker) {
     return `${name}, ${marker}`
   }
 
+  function setIsWinner(winner) {
+    isWinner = winner
+  }
+
+  function getIsWinner() {
+    return isWinner
+  }
+
   return {
     getName,
     getMarker,
+    setIsWinner,
+    getIsWinner,
     toString,
     marker
   }
 }
 
 const game = (function gameFactory() {
-  const board = boardFactory()
+  let board = boardFactory()
   const playerOne = playerFactory('Player 1', 'X')
   const playerTwo = playerFactory('Player 2', 'O')
   let turn = playerOne
@@ -103,8 +115,11 @@ const game = (function gameFactory() {
     if(isUpdateSuccessful) {
       if(board.isWin(tileNumber)) {
         console.log('winner!')
+        gameOver()
+        turn.setIsWinner(true)
       } else if(!board.getTilesRemaining()) {
         console.log('tie game')
+        gameOver()
       } else {
         updateTurn()
       }
@@ -123,25 +138,108 @@ const game = (function gameFactory() {
     console.log(`next turn belongs to ${turn.getName()}`)
   }
 
+  function getTurn() {
+    return turn
+  }
+
+  function gameOver() {
+    isOver = true
+  }
+
+  function getIsOver() {
+    return isOver
+  }
+
+  function restart() {
+    board = boardFactory()
+    // playerOne.setIsWinner(false)
+    // playerTwo.setIsWinner(false)
+    turn.setIsWinner(false)
+    turn = playerOne
+    isOver = false
+  }
+
   return {
-    turn,
+    getTurn,
     makeMove,
+    getIsOver,
+    restart
   }
 })()
 
+const displayController = (function createDislayController(){
+  const tiles = document.querySelectorAll('.tile')
+  const gameStatus = document.querySelector('.status')
+  const playAgain = document.querySelector('.play-again')
 
-const handleTileClick = function (e) {
-  const tileNumber = parseInt(e.target.id)
-  const { turn, makeMove } = game
-  console.log(`${turn.getName()} clicked tile: ${tileNumber}`)
-  if(makeMove(tileNumber, turn.getMarker())) {
-    e.target.textContent = turn.getMarker()
-  } else {
-    console.log('invalid move!')
+  const { getTurn, makeMove, getIsOver, restart } = game
+
+  const handleTileClick = function (e) {
+    const tileNumber = parseInt(e.target.id)
+    const turn = getTurn()
+    console.log(`${turn.getName()} clicked tile: ${tileNumber}`)
+    if(makeMove(tileNumber, turn.getMarker())) {
+      e.target.textContent = turn.getMarker()
+      if(getIsOver()) { // could be a tie or winner
+        console.log('game over no more clicking')
+        tearDown()
+        // displayMessage()
+      } 
+      else {
+        // updateTurn()
+      }
+      displayMessage()
+    }
   }
-} 
 
-const tiles = document.querySelectorAll('.tile')
-tiles.forEach(tile => {
-  tile.addEventListener('click', handleTileClick)
-})
+  function setup() {
+    console.log('sindie setup')
+    tiles.forEach(tile => {
+      tile.addEventListener('click', handleTileClick)
+      tile.textContent = ''
+      tile.setAttribute('style', 'cursor: pointer')
+    })
+    playAgain.addEventListener('click', handlePlayAgain)
+    playAgain.setAttribute('style', 'display: none')
+    gameStatus.setAttribute('style', 'text-align: center')
+    displayMessage()
+  }
+
+  function tearDown() {
+    tiles.forEach(tile => {
+      tile.removeEventListener('click', handleTileClick)
+      tile.setAttribute('style', 'cursor: not-allowed')
+    })
+  }
+
+  function displayMessage() {
+    const turn = game.getTurn()
+    if(getIsOver()) {
+      if(turn.getIsWinner()) {
+        gameStatus.textContent = `${turn.getName()} wins!`
+      } else {
+        gameStatus.textContent = 'Tie game!'
+      }
+      playAgain.setAttribute('style', 'display: block')
+    } else {
+      gameStatus.textContent = `Turn: ${turn.getName()}`
+    }
+  }
+
+  const handlePlayAgain = function(e) {
+    console.log('start a new game!!!')
+    e.target.setAttribute('style', 'display: none')
+    restart()
+    setup()
+  }
+ 
+  return {
+    setup
+  }
+})()
+
+displayController.setup()
+
+
+
+

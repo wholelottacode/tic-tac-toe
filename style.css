@@ -1,3 +1,7 @@
+h1 {
+  text-align: center;
+}
+
 .grid {
   display: grid;
   grid-template-columns: repeat(3, 150px);
@@ -11,5 +15,13 @@
   justify-content: center;
   align-items: center;
   font-size: 5em;
-  cursor: pointer;
+}
+
+.play-again {
+  text-align: center;
+}
+
+.container {
+  display: flex;
+  justify-content: center;
 }
